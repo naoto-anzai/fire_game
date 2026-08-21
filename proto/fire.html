@@ -184,6 +184,7 @@ aside{border-left:1px solid var(--line);background:rgba(13,9,6,.72);display:flex
     <div class="bar">
       <button class="go" id="btnGo" disabled>火をくべる</button>
       <button id="btnSort">着火点の昇順で積む</button>
+      <button id="btnSolve">最適手を計算</button>
       <button id="btnClear">炉を空にする</button>
       <span class="hint" id="hint">手札をクリックで積む / 炉のカードをクリックで戻す / ドラッグで並べ替え</span>
     </div>
@@ -408,6 +409,29 @@ function bestOrder(stack,L,oxy,suns){
 }
 const ascending=s=>[...s].sort((a,b)=>a.ign-b.ign);
 
+/* 手札から「何枚選ぶか・どれを選ぶか・どう並べるか」を全探索する。
+   連鎖が確率的なので、複数シードの平均（期待値）で比較する。
+   同名カードは同一オブジェクトなので、各深さで一度しか試さない（枝刈り）。 */
+function solveHand(hand,L,oxy,suns,trials=4){
+  let best=null,bl=-Infinity,visited=0;
+  const cur=[],used=new Array(hand.length).fill(false);
+  (function rec(){
+    if(cur.length){
+      let s=0; for(let k=1;k<=trials;k++) s+=resolve(cur,L,oxy,suns,rngOf(k*977+cur.length)).L;
+      s/=trials; visited++;
+      if(s>bl){ bl=s; best=[...cur]; }
+    }
+    if(cur.length>=SLOTS) return;
+    const tried=new Set();
+    for(let i=0;i<hand.length;i++){
+      if(used[i]||tried.has(hand[i].name)) continue;
+      tried.add(hand[i].name);
+      used[i]=true; cur.push(hand[i]); rec(); cur.pop(); used[i]=false;
+    }
+  })();
+  return {order:best,L:bl,visited};
+}
+
 /* ══════════════════════════════════════════════════════════════ 状態 */
 const S={rng:rngOf(Date.now()&0xffff),deck:[],disc:[],hand:[],stack:[],
   L:START_L,oxy:START_OXY,suns:0,peak:0,ch:0,rd:0,busy:false};
@@ -517,7 +541,7 @@ function paintLog(items){
 async function burn(){
   if(S.busy||!S.stack.length) return;
   S.busy=true; render(); $("verdict").style.display="none";
-  const stack=[...S.stack], L0=S.L, oxy0=S.oxy;
+  const stack=[...S.stack], L0=S.L, oxy0=S.oxy, hand0=[...S.hand];
   const seed=(S.rng()*1e9)|0;
   const r=resolve(stack,L0,oxy0,S.suns,rngOf(seed));
   $("log").innerHTML="";
@@ -536,11 +560,11 @@ async function burn(){
   /* 比較 */
   const asc=ascending(stack), aL=resolve(asc,L0,oxy0,S.suns,rngOf(seed)).L;
   const bo=bestOrder(stack,L0,oxy0,S.suns);
-  const row=(k,L,ord,cls)=>`<div class="vrow"><span class="k">${k}</span>
-    <span class="v ${cls}">${fmtNum(L)}°</span></div>
-    <div class="vrow"><span class="ord">${ord.map(c=>c.name).join(" → ")}</span></div>`;
-  $("verdict").innerHTML=row("あなたの並び",r.L,stack,"vyou")
-    +row("着火点の昇順",aL,asc,"scold")+row("総当たり最適",bo.L,bo.order,"vbest");
+  const sv=solveHand(hand0,L0,oxy0,S.suns);
+  $("verdict").innerHTML=vrow("あなたの並び",r.L,stack,"vyou")
+    +vrow("着火点の昇順",aL,asc,"scold")
+    +vrow("同じ5枚の最適",bo.L,bo.order,"scold")
+    +vrow("手札からの最適",sv.L,sv.order,"vbest");
   $("verdict").style.display="flex";
 
   S.disc.push(...S.hand);
@@ -548,6 +572,9 @@ async function burn(){
   setTimeout(nextPhase,900);
 }
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const vrow=(k,L,ord,cls)=>`<div class="vrow"><span class="k">${k}</span>`
+  +`<span class="v ${cls}">${fmtNum(L)}°</span></div>`
+  +`<div class="vrow"><span class="ord">${ord.map(c=>c.name).join(" → ")}</span></div>`;
 function paintTemp(){
   const t=tierOf(S.L), col=tierColor(t);
   document.documentElement.style.setProperty("--glow",col);
@@ -634,6 +661,20 @@ $("btnSort").onclick=()=>{ if(S.busy) return;
   const pick=[...S.hand].sort((a,b)=>a.ign-b.ign).slice(0,SLOTS);
   S.stack=pick; render(); };
 $("btnClear").onclick=()=>{ if(!S.busy){ S.stack=[]; render(); } };
+$("btnSolve").onclick=()=>{
+  if(S.busy) return;
+  const b=$("btnSolve"); b.disabled=true; b.textContent="探索中…";
+  setTimeout(()=>{
+    const t0=performance.now();
+    const sv=solveHand(S.hand,S.L,S.oxy,S.suns);
+    S.stack=[...sv.order]; render();
+    const d=document.createElement("div"); d.className="li big";
+    d.innerHTML=`◎ 手札 ${S.hand.length} 枚から ${sv.visited.toLocaleString("en-US")} 通りを探索`
+      +`（${Math.round(performance.now()-t0)}ms）→ 期待値 <span class="v">${fmtNum(sv.L)}°</span>`;
+    $("log").appendChild(d); $("log").scrollTop=1e9;
+    b.disabled=false; b.textContent="最適手を計算";
+  },20);
+};
 addEventListener("keydown",e=>{
   if(S.busy||$("veil").classList.contains("on")) return;
   if(e.key>="1"&&e.key<="7"){ addToStack(+e.key-1); }

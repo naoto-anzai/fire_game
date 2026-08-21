@@ -342,6 +342,30 @@ def best_permutation(stack, T, oxy, suns, trials=6):
 
 def ascending(stack): return sorted(stack, key=lambda c: c.ign)
 
+def solve_hand(hand, L, oxy, suns, trials=4, max_slots=STACK_SIZE):
+    """手札から「何枚選ぶか・どれを選ぶか・どう並べるか」を全探索する。
+    連鎖が確率的なので複数シードの平均（期待値）で比較する。
+    同名カードは同一オブジェクトなので各深さで一度しか試さない（枝刈り）。"""
+    best, bl, visited = None, float("-inf"), 0
+    cur, used = [], [False] * len(hand)
+
+    def rec():
+        nonlocal best, bl, visited
+        if cur:
+            v = sum(resolve(cur, L, oxy, suns, random.Random(k * 977 + len(cur))).T
+                    for k in range(1, trials + 1)) / trials
+            visited += 1
+            if v > bl: bl, best = v, list(cur)
+        if len(cur) >= max_slots: return
+        tried = set()
+        for i, c in enumerate(hand):
+            if used[i] or c.name in tried: continue
+            tried.add(c.name)
+            used[i] = True; cur.append(c); rec(); cur.pop(); used[i] = False
+
+    rec()
+    return best, bl, visited
+
 # ---------------------------------------------------------------- 対話プレイ
 def play(seed=None):
     run = Run(seed)
@@ -374,9 +398,12 @@ def play(seed=None):
             asc = ascending(stack)
             aT = resolve(asc, run.T, run.oxy, run.suns, random.Random(0)).T
             bp, bT = best_permutation(stack, run.T, run.oxy, run.suns)
-            print(f"\n  ├ あなたの並び : {paint(r.T)}")
-            print(f"  ├ 着火点の昇順 : {paint(aT)}  ({' → '.join(c.name for c in asc)})")
-            print(f"  └ 総当たり最適 : {paint(bT)}  ({' → '.join(c.name for c in bp)})")
+            sv, sT, nv = solve_hand(hand, run.T, run.oxy, run.suns)
+            print(f"\n  ├ あなたの並び   : {paint(r.T)}")
+            print(f"  ├ 着火点の昇順   : {paint(aT)}  ({' → '.join(c.name for c in asc)})")
+            print(f"  ├ 同じ5枚の最適  : {paint(bT)}  ({' → '.join(c.name for c in bp)})")
+            print(f"  └ 手札からの最適 : {paint(sT)}  ({' → '.join(c.name for c in sv)})"
+                  f"   [{nv:,}通り探索]")
             run.T, run.oxy = r.T, r.oxygen
             run.peak = max(run.peak, tier_of(run.T))
             run.disc += stack + rest
