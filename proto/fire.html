@@ -1,0 +1,644 @@
+<meta charset="utf-8">
+<title>七つの太陽</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap">
+
+<style>
+/* 単一テーマ。暗闇の中の火という主題にコミットするため、明暗の切替は置かない。
+   すべての色は明示的に塗る。 */
+:root{
+  --soot:#0d0906; --soot-2:#141010; --ash:#1c1613; --ash-2:#251d18;
+  --line:#332822; --bone:#ece2d4; --dim:#8d7b6c; --dim-2:#61524a;
+  --ember:#ff6b1a; --danger:#e0483c;
+  --t0:#6b3410; --t1:#d1330a; --t2:#ff7a18; --t3:#ffe6bf; --t4:#6aa8ff;
+  --t5:#79e6ff; --t6:#c9a3ff; --t7:#ff5c7a; --t8:#ffd84d; --t9:#7dffb0;
+  --glow:var(--t0);
+  --f-disp:"Shippori Mincho",serif;
+  --f-body:"Zen Kaku Gothic New",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--soot); color:var(--bone);
+  font-family:var(--f-body); font-size:14px; line-height:1.6;
+  min-height:100vh; overflow:hidden;
+}
+#glow{position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse 120% 70% at 50% 118%, var(--glow) 0%, transparent 62%);
+  opacity:.30; transition:background 1.1s ease, opacity 1.1s ease;}
+#fire{position:fixed;left:0;right:0;bottom:0;height:46vh;z-index:1;pointer-events:none;opacity:.9}
+#app{position:relative;z-index:2;display:flex;flex-direction:column;height:100vh}
+
+/* ---------- 上帯 ---------- */
+header{display:flex;align-items:center;gap:28px;padding:14px 22px;
+  border-bottom:1px solid var(--line);background:linear-gradient(var(--soot-2),transparent)}
+.chapter{min-width:230px}
+.eyebrow{font-family:var(--f-mono);font-size:10px;letter-spacing:.22em;color:var(--dim-2);text-transform:uppercase}
+.chapter h1{font-family:var(--f-disp);font-size:20px;font-weight:700;margin:1px 0 0;letter-spacing:.06em}
+.target{font-size:12px;color:var(--dim)}
+.target b{color:var(--bone);font-weight:500}
+.readout{flex:1;text-align:center;line-height:1}
+.temp{font-family:var(--f-disp);font-size:40px;font-weight:700;color:var(--glow);
+  letter-spacing:.01em;font-variant-numeric:tabular-nums;transition:color .8s ease;
+  text-shadow:0 0 26px color-mix(in srgb,var(--glow) 55%,transparent)}
+.temp .exp{font-family:var(--f-mono);font-size:20px;font-weight:700;vertical-align:super}
+.tiername{font-family:var(--f-disp);font-size:13px;color:var(--dim);letter-spacing:.35em;margin-top:8px}
+.gauges{min-width:230px;display:flex;flex-direction:column;gap:5px;align-items:flex-end}
+.suns{display:flex;gap:5px}
+.sun{width:11px;height:11px;border-radius:50%;border:1px solid var(--dim-2)}
+.sun.on{background:var(--t2);border-color:var(--t2);box-shadow:0 0 9px var(--t2)}
+.oxy{font-family:var(--f-mono);font-size:11px;color:var(--dim);letter-spacing:.08em}
+
+/* ---------- 本体 ---------- */
+main{flex:1;display:grid;grid-template-columns:1fr 372px;gap:0;min-height:0}
+.hearth{position:relative;display:flex;flex-direction:column;justify-content:flex-end;
+  align-items:center;padding:16px 24px 8px;min-height:0}
+.stack{display:flex;flex-direction:column-reverse;gap:5px;width:100%;max-width:520px;
+  overflow-y:auto;padding-bottom:4px}
+.slots{font-family:var(--f-mono);font-size:10px;letter-spacing:.2em;color:var(--dim-2);
+  margin-bottom:9px;text-align:center}
+.empty{border:1px dashed var(--line);border-radius:2px;padding:24px;text-align:center;
+  color:var(--dim-2);font-size:12px;width:100%;max-width:520px}
+
+/* ---------- カード ---------- */
+.card{position:relative;display:grid;grid-template-columns:auto 1fr auto;align-items:center;
+  gap:12px;padding:8px 12px;background:var(--ash);border:1px solid var(--line);
+  border-left:3px solid var(--tc,var(--t0));border-radius:2px;cursor:pointer;
+  transition:background .16s,transform .16s,border-color .16s}
+.card:hover{background:var(--ash-2);transform:translateX(2px)}
+.card:focus-visible{outline:2px solid var(--ember);outline-offset:2px}
+.card .nm{font-family:var(--f-disp);font-size:15px;font-weight:500;letter-spacing:.04em;white-space:nowrap}
+.card .need{font-family:var(--f-mono);font-size:9px;letter-spacing:.1em;color:var(--tc,var(--t0));
+  border:1px solid currentColor;border-radius:1px;padding:1px 4px;white-space:nowrap}
+.card .st{font-family:var(--f-mono);font-size:10.5px;color:var(--dim);
+  font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card .st .hi{color:var(--ember)}
+.card .tg{font-family:var(--f-mono);font-size:9px;color:var(--dim-2);letter-spacing:.06em;white-space:nowrap}
+.card .ord{position:absolute;left:-24px;top:50%;transform:translateY(-50%);
+  font-family:var(--f-mono);font-size:10px;color:var(--dim-2)}
+.stack .card{cursor:grab}
+.stack .card.dragging{opacity:.35}
+.stack .card.over{border-top:2px solid var(--ember)}
+.card.lit{border-color:var(--ember);box-shadow:0 0 22px -6px var(--ember)}
+.card.dead{opacity:.32;filter:grayscale(1)}
+.card.spent{opacity:.4}
+
+/* ---------- 手札 ---------- */
+footer{border-top:1px solid var(--line);background:linear-gradient(transparent,var(--soot-2));
+  padding:11px 22px 14px;display:flex;flex-direction:column;gap:9px}
+.handrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:7px}
+.hand .card{grid-template-columns:auto 1fr;grid-template-areas:"n d" "s s" "t t";gap:3px 8px;
+  align-items:start;padding:9px 10px}
+.hand .nm{grid-area:n}.hand .need{grid-area:d;justify-self:end}
+.hand .st{grid-area:s;white-space:normal}.hand .tg{grid-area:t}
+.hand .card.picked{opacity:.26;pointer-events:none}
+.bar{display:flex;gap:9px;align-items:center}
+button{font-family:var(--f-body);font-size:12.5px;font-weight:500;letter-spacing:.06em;
+  padding:8px 17px;border-radius:2px;border:1px solid var(--line);background:transparent;
+  color:var(--dim);cursor:pointer;transition:.16s}
+button:hover:not(:disabled){color:var(--bone);border-color:var(--dim)}
+button:focus-visible{outline:2px solid var(--ember);outline-offset:2px}
+button:disabled{opacity:.3;cursor:not-allowed}
+button.go{background:var(--ember);border-color:var(--ember);color:#170a02;font-weight:700}
+button.go:hover:not(:disabled){background:#ff8438;border-color:#ff8438;color:#170a02}
+.hint{font-family:var(--f-mono);font-size:10.5px;color:var(--dim-2);margin-left:auto;letter-spacing:.04em}
+
+/* ---------- ログ ---------- */
+aside{border-left:1px solid var(--line);background:rgba(13,9,6,.72);display:flex;
+  flex-direction:column;min-height:0}
+.logtitle{font-family:var(--f-mono);font-size:10px;letter-spacing:.22em;color:var(--dim-2);
+  padding:13px 18px 9px;border-bottom:1px solid var(--line);text-transform:uppercase}
+.loglist{flex:1;overflow-y:auto;padding:12px 18px 18px;display:flex;flex-direction:column;gap:5px}
+.li{font-size:12.5px;line-height:1.55;animation:in .3s ease both}
+@keyframes in{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+.li .v{font-family:var(--f-mono);font-variant-numeric:tabular-nums;color:var(--glow)}
+.li.burn{color:var(--bone)} .li.burn .n{font-family:var(--f-disp);font-weight:500}
+.li.mult{color:var(--dim);padding-left:14px}
+.li.phase{color:var(--t2);padding-left:14px;font-weight:500}
+.li.chain{color:var(--t5);padding-left:14px}
+.li.crit{color:var(--danger);padding-left:14px;font-weight:700;letter-spacing:.04em}
+.li.big{color:var(--t3);padding-left:14px;font-weight:700}
+.li.fail{color:var(--danger)}
+.li.final{border-top:1px solid var(--line);padding-top:9px;margin-top:5px;color:var(--t3);font-weight:700}
+.verdict{border-top:1px solid var(--line);padding:13px 18px;display:flex;flex-direction:column;gap:7px}
+.vrow{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-size:12px}
+.vrow .k{color:var(--dim-2);font-family:var(--f-mono);font-size:10px;letter-spacing:.1em}
+.vrow .v{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.vrow .ord{font-family:var(--f-disp);font-size:11px;color:var(--dim);text-align:right;flex:1}
+.vbest{color:var(--t3)} .vyou{color:var(--ember)}
+.scold{color:var(--dim)}
+
+/* ---------- 幕 ---------- */
+#veil{position:fixed;inset:0;z-index:20;display:none;place-items:center;
+  background:rgba(8,5,3,.93);backdrop-filter:blur(3px)}
+#veil.on{display:grid;animation:in .5s ease both}
+.card-veil{max-width:560px;text-align:center;padding:44px}
+.card-veil .eyebrow{margin-bottom:14px}
+.card-veil h2{font-family:var(--f-disp);font-size:34px;font-weight:700;margin:0 0 16px;
+  letter-spacing:.08em;text-wrap:balance;color:var(--glow)}
+.card-veil p{color:var(--dim);margin:0 0 10px;font-size:14px;text-wrap:balance}
+.card-veil .num{font-family:var(--f-mono);color:var(--bone);font-size:15px}
+.card-veil button{margin-top:24px}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+@media (max-width:940px){main{grid-template-columns:1fr}aside{display:none}}
+</style>
+
+<div id="glow"></div>
+<canvas id="fire"></canvas>
+
+<div id="app">
+  <header>
+    <div class="chapter">
+      <div class="eyebrow" id="chNo">Chapter I</div>
+      <h1 id="chName">一・熾</h1>
+      <div class="target">燃やす対象 <b id="bossName">枯野</b> ・ 発火点 <b id="bossTier">白熱</b></div>
+    </div>
+    <div class="readout">
+      <div class="temp" id="temp">1</div>
+      <div class="tiername" id="tierName">燻り</div>
+    </div>
+    <div class="gauges">
+      <div class="eyebrow">空の太陽</div>
+      <div class="suns" id="suns"></div>
+      <div class="oxy" id="oxy">酸素 14</div>
+      <div class="oxy" id="roundNo">第一夜 / 前半</div>
+    </div>
+  </header>
+
+  <main>
+    <section class="hearth">
+      <div class="slots" id="slots">炉 — 下から順に積む　0 / 5</div>
+      <div class="stack" id="stack"></div>
+      <div class="empty" id="stackEmpty">手札をクリックして炉に積む。下が先に燃える。</div>
+    </section>
+    <aside>
+      <div class="logtitle">燃焼</div>
+      <div class="loglist" id="log"></div>
+      <div class="verdict" id="verdict" style="display:none"></div>
+    </aside>
+  </main>
+
+  <footer>
+    <div class="handrow hand" id="hand"></div>
+    <div class="bar">
+      <button class="go" id="btnGo" disabled>火をくべる</button>
+      <button id="btnSort">着火点の昇順で積む</button>
+      <button id="btnClear">炉を空にする</button>
+      <span class="hint" id="hint">手札をクリックで積む / 炉のカードをクリックで戻す / ドラッグで並べ替え</span>
+    </div>
+  </footer>
+</div>
+
+<div id="veil"><div class="card-veil">
+  <div class="eyebrow" id="vEyebrow"></div>
+  <h2 id="vTitle"></h2>
+  <p id="vBody"></p>
+  <button class="go" id="vBtn">次へ</button>
+</div></div>
+
+<script>
+"use strict";
+/* ══════════════════════════════════════════════════════════════════
+   温度は 10^L として指数 L だけを持つ。float64 の 10^308 を越えるため。
+   ══════════════════════════════════════════════════════════════════ */
+const NEG = -Infinity;
+const log10 = Math.log10;
+function ladd(L,h){
+  if(h<=0) return L;
+  const lh=log10(h);
+  if(L===NEG) return lh;
+  if(L-lh>18) return L;
+  if(lh-L>18) return lh;
+  return Math.max(L,lh)+log10(1+Math.pow(10,-Math.abs(L-lh)));
+}
+function lmul(L,m){ return m<=0?NEG:L+log10(m); }
+
+/* ---- チューニング（game.py と同値） ---- */
+const START_L=0, START_OXY=14, HAND=7, SLOTS=5, ROUNDS=2;
+const METRA=3, METRA_FLOOR=1, PHASE_BONUS=.75, RES_BASE=2.5, DUST=4, CHAIN_GEN=60;
+
+const TIERS=["燻り","赤熱","橙炎","白熱","青炎","蒼閃","虚炎","劫火","白劫","焦熱",
+"大焦熱","無間","壊劫","空劫","成劫","住劫","初禅","二禅","三禅","四禅",
+"梵天","光音","遍浄","広果","無想","無煩","無熱","善現","善見","色究竟",
+"空無辺","識無辺","無所有","非想","不可説","不可説転","阿僧祇","那由他","恒河沙","無量大数"];
+const RAMP=["#6b3410","#d1330a","#ff7a18","#ffe6bf","#6aa8ff","#79e6ff","#c9a3ff","#ff5c7a","#ffd84d","#7dffb0",
+"#ff9ecb","#a0f0ff","#fff3c4","#8f7dff","#ff7d3d","#e6ffef","#ffb3f0","#5fd6ff","#ffe08a","#d0c4ff"];
+const tierOf = L => (L<0||Number.isNaN(L))?0:Math.floor(L);
+const tierName = t => t<TIERS.length?TIERS[t]:"第"+t+"段";
+const tierColor = t => RAMP[t<RAMP.length?t:RAMP.length-10+((t-RAMP.length)%10)];
+
+function fmtNum(L){
+  if(L<0) return "0";
+  if(L<7) return Math.round(Math.pow(10,L)).toLocaleString("en-US");
+  const e=Math.floor(L);
+  return Math.pow(10,L-e).toFixed(2)+"×10^"+e.toLocaleString("en-US");
+}
+function fmtHtml(L){
+  if(L<7) return fmtNum(L);
+  const e=Math.floor(L);
+  return Math.pow(10,L-e).toFixed(2)+'×10<span class="exp">'+e.toLocaleString("en-US")+'</span>';
+}
+
+/* ---- 乱数（再現可能） ---- */
+function rngOf(seed){ let a=seed>>>0; return ()=>{ a=(a+0x6D2B79F5)>>>0;
+  let t=Math.imul(a^a>>>15,1|a); t=(t+Math.imul(t^t>>>7,61|t))^t;
+  return ((t^t>>>14)>>>0)/4294967296; }; }
+const ri=(r,a,b)=>a+Math.floor(r()*(b-a+1));
+
+/* ══════════════════════════════════════════════════════════════════ 燃料 */
+const C=(name,o={})=>Object.assign({name,ign:0,heat:0,mult:1,cat:1,tags:[],cp:0,cn:[0,0],spawn:"",sp:"",desc:""},o);
+const LIST=[
+ C("麻屑",{heat:3,tags:["屑"],sp:"tinder",desc:"以降の必要段 −1"}),
+ C("杉の葉",{heat:4,tags:["屑","木"],cp:.40,cn:[1,2],spawn:"火の粉",desc:"40%で火の粉"}),
+ C("松ぼっくり",{heat:5,tags:["木"],cp:.55,cn:[1,3],spawn:"爆ぜた種",desc:"55%で爆ぜた種。種はさらに連鎖する"}),
+ C("乾いた薪",{ign:1,heat:14,tags:["木"],desc:"安定の基礎"}),
+ C("松脂",{cat:3,tags:["樹脂"],desc:"次の発熱×3。触媒同士は掛け算で合成"}),
+ C("炭",{ign:1,heat:9,tags:["炭"],desc:"発熱低・持続長"}),
+ C("生木",{ign:4,heat:45,mult:2,tags:["湿","木"],desc:"罠。届かないと1段落ちる"}),
+ C("コークス",{ign:2,heat:34,tags:["炭"]}),
+ C("重油",{ign:2,heat:26,mult:1.5,tags:["油"],sp:"oil",desc:"直後2枚の必要段 −2"}),
+ C("送風",{tags:["行動"],sp:"bellows",desc:"同時燃焼本数だけ累計を乗算"}),
+ C("マグネシウム",{ign:3,heat:70,mult:2,tags:["粉","金属"],cp:.45,cn:[1,2],spawn:"火の粉"}),
+ C("小麦粉",{ign:1,tags:["粉"],desc:"単体では無意味。粉2枚で粉塵爆発"}),
+ C("テルミット",{ign:3,heat:140,tags:["金属"],sp:"thermite",desc:"金属3つ以上で発熱×10"}),
+ C("酸素ボンベ",{tags:["行動"],sp:"oxygen",desc:"酸素 +12"}),
+ C("水",{ign:5,heat:4000,mult:3,tags:["湿"],desc:"届かないと1段落ちる"}),
+ C("灰",{ign:1,tags:["灰"],sp:"ash",desc:"ここまでの発熱の平均で燃える"}),
+ C("炎そのもの",{ign:5,tags:["概念","火"],sp:"square",desc:"★温度を二乗する"}),
+ C("雷",{ign:4,heat:600,mult:2,tags:["金属"],cp:.50,cn:[1,3],spawn:"火の粉"}),
+ C("燃えない何か",{tags:["概念"],sp:"unburnable",desc:"以降の着火判定を無視"}),
+ C("時間",{ign:6,tags:["概念"],sp:"time",desc:"★倍率の総積をもう一度掛ける"}),
+ C("名前",{ign:4,tags:["概念"],sp:"copy",desc:"★直前の1枚をもう一度解決する"}),
+ C("太陽",{ign:7,tags:["概念","火"],sp:"sun",desc:"★太陽の数だけ温度を累乗する"}),
+ C("火の粉",{heat:6,mult:1.3,tags:["屑"]}),
+ C("爆ぜた種",{heat:11,mult:1.6,tags:["木"],cp:.35,cn:[1,2],spawn:"爆ぜた種"}),
+];
+const CARD={}; LIST.forEach(c=>CARD[c.name]=c);
+const STARTER=["麻屑","麻屑","杉の葉","杉の葉","松ぼっくり","松ぼっくり","乾いた薪","乾いた薪",
+"松脂","松脂","炭","炭","小麦粉","送風","生木"];
+const CHAPTERS=[
+ {n:"一・熾",boss:"枯野",t:5,rw:"灰",line:"いま燃えているもの"},
+ {n:"二・流",boss:"大河",t:9,rw:"水",line:"流れるもの"},
+ {n:"三・淵",boss:"底の見えない湖",t:18,rw:"炎そのもの",line:"湛えるもの"},
+ {n:"四・満",boss:"大海",t:30,rw:"酸素ボンベ",line:"満ちるもの"},
+ {n:"五・輪",boss:"金輪・水輪・風輪",t:60,rw:"時間",line:"世界を支える三層"},
+ {n:"六・軸",boss:"須弥山",t:90,rw:"太陽",line:"動かないもの"},
+ {n:"七・限",boss:"火",t:180,rw:"",line:"火が届く限界"},
+];
+const ROMAN=["I","II","III","IV","V","VI","VII"];
+
+/* ══════════════════════════════════════════════════ 解決エンジン（1枚ループ） */
+function resolve(stack,L,oxygen,suns,rng,depth=0){
+  const out=[]; const say=(kind,text)=>out.push({kind,text,L});
+  let reliefG=suns>>1, reliefX=0, ignore=false, oil=0, cat=1, streak=1,
+      prev=[], heats=[], burned=0, critical=false, phase=0, mpLog=0, prevCard=null;
+  const lit=new Array(stack.length).fill(false);
+  const nDust =stack.filter(c=>c.tags.includes("粉")).length;
+  const nMetal=stack.filter(c=>c.tags.includes("金属")).length;
+
+  const bump=(a,b)=>{ const d=tierOf(b)-tierOf(a);
+    if(d>0){ phase+=d; out.push({kind:"phase",L:b,
+      text:`⤴ 相転移 ×${d} — 炉は用済みになった（以降の乗算 +${(PHASE_BONUS*phase).toFixed(2)}）`}); } };
+  const mul=(L,m,why)=>{ if(m===1) return L;
+    const me=m+PHASE_BONUS*phase; mpLog+=log10(me);
+    const b=L; L=lmul(L,me);
+    out.push({kind:"mult",L,text:`${why} <b>×${me.toLocaleString("en-US",{maximumFractionDigits:2})}</b> → <span class="v">${fmtNum(L)}°</span>`});
+    bump(b,L); return L; };
+
+  for(let i=0;i<stack.length;i++){
+    const c=stack[i];
+    /* 1 着火判定 */
+    const need=Math.max(0,c.ign-reliefG-reliefX-(oil>0?2:0));
+    if(oil>0) oil--;
+    if(!ignore && need>tierOf(L)){
+      out.push({kind:"fail",L,idx:i,
+        text:`✗ <b>${c.name}</b> 着火せず — 要 ${tierName(need)} / 現在 ${tierName(tierOf(L))}。上の ${stack.length-i-1} 枚は不発`});
+      if(c.tags.includes("湿")){ L-=1; out.push({kind:"fail",L,text:`湿ったものが火を奪う → <span class="v">${fmtNum(L)}°</span>`}); }
+      break;
+    }
+    /* 2 発熱の確定 */
+    let base=c.heat;
+    if(c.sp==="ash")  base=heats.length?heats.reduce((a,b)=>a+b,0)/heats.length:1;
+    if(c.sp==="thermite"&&nMetal>=3) base=c.heat*10;
+    const common=c.tags.filter(t=>prev.includes(t));
+    streak = common.length?streak+1:1;
+    const res=Math.pow(RES_BASE,streak-1);
+    const heat=base*cat*res;
+    /* 3 加算 */
+    let b=L; L=ladd(L,heat); burned++; heats.push(base); lit[i]=true;
+    const note=[]; if(cat!==1) note.push(`触媒×${cat}`);
+    if(res!==1) note.push(`共鳴×${res.toFixed(1)}（${streak}連 ${common.join("/")}）`);
+    out.push({kind:"burn",L,idx:i,
+      text:`<span class="n">${c.name}</span> +${Math.round(heat).toLocaleString("en-US")}`
+          +(note.length?` <span style="color:var(--dim-2)">${note.join(" ")}</span>`:"")
+          +` → <span class="v">${fmtNum(L)}°</span>`});
+    bump(b,L);
+    cat = (c.cat!==1&&cat!==1) ? cat*c.cat : c.cat;
+    prev=c.tags;
+    /* 4 累計への乗算 */
+    if(streak>=3) L=mul(L,Math.pow(RES_BASE,streak-2),`共鳴${streak}連`);
+    L=mul(L, c.sp==="bellows"?burned:c.mult, c.name);
+    /* 特殊 */
+    if(c.sp==="tinder") reliefX++;
+    else if(c.sp==="oil") oil=2;
+    else if(c.sp==="oxygen"){ oxygen+=12; say("mult","酸素 +12"); }
+    else if(c.sp==="unburnable"){ ignore=true; say("big","燃えるという条件そのものが無効になった"); }
+    else if(c.sp==="square"){ b=L; if(L>0) L*=2;
+      out.push({kind:"big",L,text:`★ 火が火を燃やす — 二乗 → <span class="v">${fmtNum(L)}°</span>`}); bump(b,L); }
+    else if(c.sp==="time"){ b=L; const p=mpLog; L+=p; mpLog*=2;
+      out.push({kind:"big",L,text:`★ 時間 — 倍率の総積 ×10^${p.toFixed(1)} を再適用 → <span class="v">${fmtNum(L)}°</span>`}); bump(b,L); }
+    else if(c.sp==="sun"){ b=L; const e=1+.35*Math.max(1,suns); if(L>0) L*=e;
+      out.push({kind:"big",L,text:`★ 太陽 — 温度を ${e.toFixed(2)} 乗 → <span class="v">${fmtNum(L)}°</span>`}); bump(b,L); }
+    else if(c.sp==="copy"&&prevCard&&depth<3){
+      say("big",`★『${prevCard.name}』をもう一度`);
+      const r=resolve([prevCard],L,oxygen,suns,rng,depth+1);
+      L=r.L; oxygen=r.oxygen; r.log.forEach(x=>out.push(Object.assign({},x,{kind:x.kind==="burn"?"chain":x.kind})));
+    }
+    /* 5 チェーン */
+    if(c.cp>0&&oxygen>0){
+      const bonus=.15*(streak-1);
+      const m=Math.min(.95,c.cp+bonus)*((c.cn[0]+c.cn[1])/2);
+      if(m>=1){ critical=true; out.push({kind:"crit",L,text:`⚠ 臨界 m=${m.toFixed(2)} ≥ 1 — 酸素が尽きるまで止まらない`}); }
+      b=L; const r=runChain(c,L,oxygen,rng,bonus,phase);
+      L=r.L; oxygen=r.oxy;
+      if(r.spawned) { out.push({kind:"chain",L,
+        text:`連鎖 ${r.gens} 世代 / ${r.spawned} 回発火（酸素残 ${oxygen}） → <span class="v">${fmtNum(L)}°</span>`}); bump(b,L); }
+    }
+    prevCard=c;
+  }
+  /* 6 全体再点火 */
+  if(nDust>=2&&burned>=1){
+    const add=log10(DUST)*(nDust-1)+Math.max(0,mpLog); L+=add;
+    out.push({kind:"big",L,text:`◆ 粉塵爆発（粉 ${nDust} 枚）累計 ×10^${add.toFixed(1)} → <span class="v">${fmtNum(L)}°</span>`});
+  }
+  if(suns>=1){ L+=suns; out.push({kind:"big",L,text:`☀ 空の太陽 ${suns}つ ×10^${suns} → <span class="v">${fmtNum(L)}°</span>`}); }
+  out.push({kind:"final",L,text:`到達 <span class="v">${fmtNum(L)}°</span> ${tierName(tierOf(L))}`});
+  return {L,oxygen,log:out,burned,critical,lit};
+}
+function runChain(src,L,oxy,rng,bonus,phase){
+  let q=[src],spawned=0,gens=0;
+  while(q.length&&oxy>0&&gens<CHAIN_GEN){
+    gens++; const nx=[];
+    for(const s of q){
+      if(!s.spawn) continue;
+      if(rng()>=Math.min(.95,s.cp+bonus)) continue;
+      const n=ri(rng,s.cn[0],s.cn[1]);
+      for(let k=0;k<n;k++){
+        if(oxy<=0) break;
+        oxy--; const ch=CARD[s.spawn];
+        L=lmul(ladd(L,ch.heat),ch.mult+PHASE_BONUS*phase*.25);
+        spawned++; nx.push(ch);
+      }
+    }
+    q=nx;
+  }
+  return {L,oxy,spawned,gens:Math.max(0,gens-1)};
+}
+/* 総当たり（120通り） */
+function permute(a){ if(a.length<=1) return [a];
+  const r=[]; a.forEach((x,i)=>permute([...a.slice(0,i),...a.slice(i+1)]).forEach(p=>r.push([x,...p]))); return r; }
+function bestOrder(stack,L,oxy,suns){
+  let best=null,bl=-Infinity;
+  for(const p of permute(stack)){
+    let s=0; for(let k=1;k<=3;k++) s+=resolve(p,L,oxy,suns,rngOf(k*977)).L;
+    if(s/3>bl){ bl=s/3; best=p; }
+  }
+  return {order:best,L:bl};
+}
+const ascending=s=>[...s].sort((a,b)=>a.ign-b.ign);
+
+/* ══════════════════════════════════════════════════════════════ 状態 */
+const S={rng:rngOf(Date.now()&0xffff),deck:[],disc:[],hand:[],stack:[],
+  L:START_L,oxy:START_OXY,suns:0,peak:0,ch:0,rd:0,busy:false};
+const $=id=>document.getElementById(id);
+
+function newRun(){
+  S.deck=STARTER.map(n=>CARD[n]); shuffle(S.deck);
+  S.disc=[];S.L=START_L;S.oxy=START_OXY;S.suns=0;S.peak=0;S.ch=0;S.rd=0;
+  deal(); render(); paintLog([{kind:"burn",text:"世界のすべての火が消えた。手元に残ったのは種火が一つ。"}]);
+}
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(S.rng()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } }
+function deal(){
+  S.hand=[]; S.stack=[];
+  for(let i=0;i<HAND;i++){
+    if(!S.deck.length){ S.deck=S.disc; S.disc=[]; shuffle(S.deck); }
+    if(!S.deck.length) break;
+    S.hand.push(S.deck.pop());
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════ 描画 */
+function cardEl(c,inStack,i){
+  const el=document.createElement("div");
+  el.className="card"; el.tabIndex=0;
+  el.style.setProperty("--tc",tierColor(c.ign));
+  const st=[];
+  if(c.heat) st.push(`発熱 +${c.heat}`);
+  if(c.cat!==1) st.push(`<span class="hi">次 ×${c.cat}</span>`);
+  if(c.mult!==1) st.push(`<span class="hi">累計 ×${c.mult}</span>`);
+  if(c.cp) st.push(`連鎖 ${Math.round(c.cp*100)}%`);
+  if(c.sp&&c.desc) st.push(`<span class="hi">${c.desc}</span>`);
+  else if(c.desc) st.push(c.desc);
+  el.innerHTML=(inStack?`<span class="ord">${i+1}</span>`:"")
+    +`<span class="nm">${c.name}</span>`
+    +`<span class="st">${st.join(" ・ ")}</span>`
+    +`<span class="need">要 ${tierName(c.ign)}</span>`
+    +(inStack?"":`<span class="tg">${c.tags.join(" / ")}</span>`);
+  return el;
+}
+function render(){
+  const ch=CHAPTERS[S.ch];
+  $("chNo").textContent="Chapter "+ROMAN[S.ch]+" — "+ch.line;
+  $("chName").textContent=ch.n;
+  $("bossName").textContent=ch.boss;
+  $("bossTier").textContent=tierName(ch.t)+"（10^"+ch.t+"°）";
+  $("roundNo").textContent="第"+"一二三四五六七"[S.ch]+"夜 / "+(S.rd===0?"前半":"後半");
+  $("oxy").textContent="酸素 "+S.oxy;
+  $("suns").innerHTML=CHAPTERS.map((_,i)=>`<span class="sun${i<S.suns?" on":""}"></span>`).join("");
+  const t=tierOf(S.L), col=tierColor(t);
+  document.documentElement.style.setProperty("--glow",col);
+  $("glow").style.opacity=Math.min(.62,.22+t*.035);
+  $("temp").innerHTML=fmtHtml(S.L);
+  $("tierName").textContent=tierName(t);
+
+  const hd=$("hand"); hd.innerHTML="";
+  S.hand.forEach((c,i)=>{
+    const el=cardEl(c,false,i);
+    if(S.stack.includes(c)&&S.stack.filter(x=>x===c).length>=S.hand.filter(x=>x===c).length) {}
+    el.addEventListener("click",()=>addToStack(i));
+    el.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){e.preventDefault();addToStack(i);} });
+    hd.appendChild(el);
+  });
+  markPicked();
+
+  const sk=$("stack"); sk.innerHTML="";
+  S.stack.forEach((c,i)=>{
+    const el=cardEl(c,true,i);
+    el.draggable=true;
+    el.addEventListener("click",()=>{ if(!S.busy){ S.stack.splice(i,1); render(); } });
+    el.addEventListener("dragstart",e=>{ dragFrom=i; el.classList.add("dragging"); e.dataTransfer.effectAllowed="move"; });
+    el.addEventListener("dragend",()=>{ el.classList.remove("dragging"); document.querySelectorAll(".over").forEach(x=>x.classList.remove("over")); });
+    el.addEventListener("dragover",e=>{ e.preventDefault(); el.classList.add("over"); });
+    el.addEventListener("dragleave",()=>el.classList.remove("over"));
+    el.addEventListener("drop",e=>{ e.preventDefault(); el.classList.remove("over");
+      if(dragFrom===null||dragFrom===i) return;
+      const [m]=S.stack.splice(dragFrom,1); S.stack.splice(i,0,m); dragFrom=null; render(); });
+    sk.appendChild(el);
+  });
+  $("stackEmpty").style.display=S.stack.length?"none":"block";
+  $("slots").textContent=`炉 — 下から順に積む　${S.stack.length} / ${SLOTS}`;
+  $("btnGo").disabled=S.busy||S.stack.length===0;
+  $("btnSort").disabled=S.busy;
+  $("btnClear").disabled=S.busy||!S.stack.length;
+}
+let dragFrom=null;
+function markPicked(){
+  const used={}; S.stack.forEach(c=>used[c.name]=(used[c.name]||0)+1);
+  const seen={};
+  [...$("hand").children].forEach((el,i)=>{
+    const n=S.hand[i].name; seen[n]=(seen[n]||0)+1;
+    el.classList.toggle("picked", seen[n]<=(used[n]||0));
+  });
+}
+function addToStack(i){
+  if(S.busy||S.stack.length>=SLOTS) return;
+  const c=S.hand[i];
+  const used=S.stack.filter(x=>x===c).length;
+  if(used>=S.hand.filter(x=>x===c).length) return;
+  S.stack.push(c); render();
+}
+function paintLog(items){
+  const L=$("log"); L.innerHTML="";
+  items.forEach(x=>{ const d=document.createElement("div"); d.className="li "+(x.kind||"burn"); d.innerHTML=x.text; L.appendChild(d); });
+}
+
+/* ══════════════════════════════════════════════════════════════ 燃焼 */
+async function burn(){
+  if(S.busy||!S.stack.length) return;
+  S.busy=true; render(); $("verdict").style.display="none";
+  const stack=[...S.stack], L0=S.L, oxy0=S.oxy;
+  const seed=(S.rng()*1e9)|0;
+  const r=resolve(stack,L0,oxy0,S.suns,rngOf(seed));
+  $("log").innerHTML="";
+  const cards=[...$("stack").children]; // DOM 順 = 積んだ順（column-reverse は表示だけ）
+  const reduce=matchMedia("(prefers-reduced-motion:reduce)").matches;
+  for(const it of r.log){
+    const d=document.createElement("div"); d.className="li "+it.kind; d.innerHTML=it.text;
+    $("log").appendChild(d); $("log").scrollTop=1e9;
+    if(typeof it.idx==="number"&&cards[it.idx]) cards[it.idx].classList.add(it.kind==="fail"?"dead":"lit");
+    if(it.kind==="fail"&&typeof it.idx==="number") for(let k=it.idx;k<cards.length;k++) cards[k]&&cards[k].classList.add("dead");
+    if(typeof it.L==="number"&&isFinite(it.L)){ S.L=it.L; paintTemp(); }
+    if(!reduce) await sleep(it.kind==="burn"?420:it.kind==="big"||it.kind==="crit"?620:300);
+  }
+  S.L=r.L; S.oxy=r.oxygen; S.peak=Math.max(S.peak,tierOf(S.L)); paintTemp();
+
+  /* 比較 */
+  const asc=ascending(stack), aL=resolve(asc,L0,oxy0,S.suns,rngOf(seed)).L;
+  const bo=bestOrder(stack,L0,oxy0,S.suns);
+  const row=(k,L,ord,cls)=>`<div class="vrow"><span class="k">${k}</span>
+    <span class="v ${cls}">${fmtNum(L)}°</span></div>
+    <div class="vrow"><span class="ord">${ord.map(c=>c.name).join(" → ")}</span></div>`;
+  $("verdict").innerHTML=row("あなたの並び",r.L,stack,"vyou")
+    +row("着火点の昇順",aL,asc,"scold")+row("総当たり最適",bo.L,bo.order,"vbest");
+  $("verdict").style.display="flex";
+
+  S.disc.push(...S.hand);
+  S.busy=false;
+  setTimeout(nextPhase,900);
+}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+function paintTemp(){
+  const t=tierOf(S.L), col=tierColor(t);
+  document.documentElement.style.setProperty("--glow",col);
+  $("glow").style.opacity=Math.min(.62,.22+t*.035);
+  $("temp").innerHTML=fmtHtml(S.L); $("tierName").textContent=tierName(t);
+  $("oxy").textContent="酸素 "+S.oxy;
+}
+function nextPhase(){
+  if(S.rd+1<ROUNDS){
+    S.rd++;
+    S.L=Math.max(S.L-log10(METRA),Math.max(0,S.peak-METRA_FLOOR));
+    deal(); render();
+    const d=document.createElement("div"); d.className="li phase";
+    d.innerHTML=`── メトラ（定めの分だけ燃え、定めの分だけ消える） → <span class="v">${fmtNum(S.L)}°</span>`;
+    $("log").appendChild(d);
+    if(S.L<0) return over("火が消えた","夜明けは来ない。");
+    return;
+  }
+  const ch=CHAPTERS[S.ch];
+  if(tierOf(S.L)>=ch.t){
+    S.suns++;
+    if(ch.rw) S.disc.push(CARD[ch.rw]);
+    S.oxy=Math.max(S.oxy,START_OXY);
+    veil("Chapter "+ROMAN[S.ch]+" 焼尽",`${ch.boss}が燃えた`,
+      `空に <span class="num">${S.suns}</span> つ目の太陽が昇る。`
+      +(ch.rw?`<br>灰を拾った — <span class="num">『${ch.rw}』</span>がデッキに加わった。`:"")
+      +(S.suns>=2?`<br><span style="color:var(--dim-2)">世界が乾き、燃料の必要段が下がっている。</span>`:""),
+      ()=>{ if(S.ch+1>=CHAPTERS.length) return finish();
+            S.ch++; S.rd=0; deal(); render(); });
+  } else {
+    over(`${ch.boss}は燃えなかった`,`必要 ${tierName(ch.t)}（10^${ch.t}°）に対し、到達は ${fmtNum(S.L)}°。`);
+  }
+}
+function finish(){
+  veil("Ekpyrosis","七つ目の太陽が昇った",
+    `火は場所を持たず、概念として燃えている。<br>最終到達 <span class="num">${fmtNum(S.L)}°</span> — ${tierName(tierOf(S.L))}。<br>
+     <span style="color:var(--dim-2)">焼き尽くされた宇宙は、また同じ形で始まる。</span>`,
+    ()=>newRun(),"もう一度、火を起こす");
+}
+function over(title,body){
+  veil("Extinction",title,body+`<br><span style="color:var(--dim-2)">火は所有できない。持ち越せるのは、起こし方だけ。</span>`,
+    ()=>newRun(),"もう一度、火を起こす");
+}
+function veil(eyebrow,title,body,fn,label){
+  $("vEyebrow").textContent=eyebrow; $("vTitle").textContent=title;
+  $("vBody").innerHTML=body; $("vBtn").textContent=label||"次へ";
+  $("veil").classList.add("on");
+  $("vBtn").onclick=()=>{ $("veil").classList.remove("on"); fn(); };
+  $("vBtn").focus();
+}
+
+/* ══════════════════════════════════════════════════════════════ 焔 */
+const cv=$("fire"), cx=cv.getContext("2d");
+let P=[];
+function fit(){ cv.width=innerWidth; cv.height=innerHeight*.46; }
+addEventListener("resize",fit); fit();
+function tick(){
+  const t=tierOf(S.L), col=tierColor(t);
+  const power=Math.min(1,.12+t*.06);
+  cx.clearRect(0,0,cv.width,cv.height);
+  cx.globalCompositeOperation="lighter";
+  const n=Math.round(2+power*7);
+  for(let i=0;i<n;i++) P.push({
+    x:cv.width/2+(Math.random()-.5)*cv.width*(.10+power*.55),
+    y:cv.height, vx:(Math.random()-.5)*.7, vy:-(.7+Math.random()*2.4*(.4+power)),
+    r:2+Math.random()*(6+power*22), a:.10+Math.random()*.22*power, c:col});
+  P=P.filter(p=>{
+    p.x+=p.vx; p.y+=p.vy; p.vy*=.992; p.a*=.975; p.r*=1.008;
+    if(p.a<.006||p.y<-40) return false;
+    const g=cx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r);
+    g.addColorStop(0,p.c); g.addColorStop(1,"transparent");
+    cx.globalAlpha=p.a; cx.fillStyle=g;
+    cx.beginPath(); cx.arc(p.x,p.y,p.r,0,6.284); cx.fill();
+    return true;
+  });
+  cx.globalAlpha=1; cx.globalCompositeOperation="source-over";
+  requestAnimationFrame(tick);
+}
+if(!matchMedia("(prefers-reduced-motion:reduce)").matches) tick();
+
+/* ══════════════════════════════════════════════════════════════ 操作 */
+$("btnGo").onclick=burn;
+$("btnSort").onclick=()=>{ if(S.busy) return;
+  const pick=[...S.hand].sort((a,b)=>a.ign-b.ign).slice(0,SLOTS);
+  S.stack=pick; render(); };
+$("btnClear").onclick=()=>{ if(!S.busy){ S.stack=[]; render(); } };
+addEventListener("keydown",e=>{
+  if(S.busy||$("veil").classList.contains("on")) return;
+  if(e.key>="1"&&e.key<="7"){ addToStack(+e.key-1); }
+  if(e.key==="Enter") burn();
+  if(e.key==="Backspace"){ e.preventDefault(); S.stack.pop(); render(); }
+});
+newRun();
+</script>
